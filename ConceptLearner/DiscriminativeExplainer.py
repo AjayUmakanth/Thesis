@@ -1,14 +1,13 @@
 """Methods and classes that inherit the parent explainer class"""
-from XGNN.Infrastructure.GNN import GNN
-from XGNN.Infrastructure.Explainer import Explainer
+from ConceptLearner import GNN
+from ConceptLearner import ConvertToOWL
+from ConceptLearner.Utils import _find_classes_with_y_labels
 from torch_geometric.data import HeteroData
 from ontolearn.owlapy.model import OWLClassExpression
-from XGNN.DiscriminativeApproach.ConvertToOWL import ConvertToOWL
 from ontolearn.knowledge_base import KnowledgeBase
 from ontolearn.concept_learner import EvoLearner
 from ontolearn.learning_problem import PosNegLPStandard
 from ontolearn.owlapy.model import OWLNamedIndividual, IRI
-from XGNN.Infrastructure.Utils import _find_classes_with_y_labels
 from ontolearn.metrics import Accuracy, F1
 from ontolearn.abstracts import AbstractScorer
 from typing import Optional
@@ -20,7 +19,7 @@ from ontolearn.owlapy.model import OWLNamedIndividual, IRI, OWLObjectIntersectio
 import random
 import re
 
-class DiscriminativeExplainer(Explainer):
+class DiscriminativeExplainer():
     """ An abstract class which represent an explainer. An explainer should be able to use a label to generate a
     model-level explanation based on a given GNN and the related dataset.
 

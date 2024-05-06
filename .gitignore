@@ -214,3 +214,5 @@ owlGraphs/*
 *.pdf
 *.synctex(busy)
 /output.txt
+
+RawData
