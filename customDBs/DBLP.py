@@ -5,9 +5,9 @@ from torch_geometric.data import HeteroData
 import nltk
 from nltk.corpus import stopwords
 
-def load_dblp(path = "rawData\dblp"):
+def load_dblp(path = "rawData\dblp", bag_of_words_size = 10):
     author_ids, author_labels, author_id_dict = _get_authors(path)
-    paper_tensor, paper_id_dict = _get_papers(path)
+    paper_tensor, paper_id_dict = _get_papers(path, bag_of_words_size)
     paper_author_mappings = _get_author_paper_mappings(path, author_id_dict, paper_id_dict)
 
     dataset = HeteroData()
@@ -38,13 +38,10 @@ def _get_authors(path):
     ids, labels = zip(*sorted_lists)
     return ids, labels, id_dict
 
-def _get_papers(path):
+def _get_papers(path, bag_of_words_size):
     file_path = path + "\paper.txt" 
     bag_of_words = []
-
-    # Vocabulary to store unique words
     vocabulary = []
-    ids = []
     total_words = {}
     paper_id_dict = {}
     stop_words = stopwords.words('english')
@@ -68,7 +65,8 @@ def _get_papers(path):
             bag_of_words.append(dict(word_count))
             paper_id_dict[id] = idx
 
-    total_words = dict(sorted(total_words.items(), key=lambda item: item[1], reverse=True))
+    total_words = dict(sorted(total_words.items(), key=lambda item: item[1], reverse=True)[:bag_of_words_size])
+    vocabulary = list(total_words.keys())
 
     matrix = []
     for item in bag_of_words:

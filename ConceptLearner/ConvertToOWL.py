@@ -1,4 +1,4 @@
-from rdflib import Graph, Literal, RDF, RDFS, Namespace, OWL
+from rdflib import XSD, Graph, Literal, RDF, RDFS, Namespace, OWL
 from torch_geometric.data import HeteroData
 from rdflib.term import URIRef
 
@@ -56,6 +56,16 @@ class ConvertToOWL():
         classNamespace = Namespace(self.namespace)
         for node in self.dataset.node_types:
             if "x" in self.dataset[node]:
+                n = self.dataset[node].x.size(dim=1)
+                for i in range(n):
+                    self.graph.add((classNamespace[f'{node}_property_{i+1}'], RDF.type, OWL.DatatypeProperty))
+                    self.graph.add((classNamespace[f'{node}_property_{i+1}'], RDFS.domain, classNamespace[node]))
+                    self.graph.add((classNamespace[f'{node}_property_{i+1}'], RDFS.range, XSD.double))
+
+    def _buildDataPropertiesAsObject(self):
+        classNamespace = Namespace(self.namespace)
+        for node in self.dataset.node_types:
+            if "x" in self.dataset[node]:
                 tensorValues = self.dataset[node].x
                 n = tensorValues.size(1)
                 for i in range(n):
@@ -92,9 +102,10 @@ class ConvertToOWL():
                     if self.create_data_properties:
                         for col_idx, property in enumerate(person):
                             val = property.item()
-                            if val == 1:
-                                propertyObjectProperty = classNamespace[f'has_{node}_property_{col_idx+1}']
-                                self.graph.add((newNode, propertyObjectProperty, Literal(True)))
+                            if val != 0:
+                                propertyObjectProperty = classNamespace[f'{node}_property_{col_idx+1}']
+                                self.graph.add((newNode, propertyObjectProperty, Literal(val)))
+                                #self.graph.add((newNode, propertyObjectProperty, Literal(True)))
             if "num_nodes" in self.dataset[node]: 
                 num_nodes = self.dataset[node].num_nodes
                 for idx in range(num_nodes):

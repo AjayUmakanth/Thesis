@@ -1,6 +1,6 @@
 """Methods and classes that inherit the parent explainer class"""
 from ConceptLearner import GNN
-from ConceptLearner import ConvertToOWL
+from ConceptLearner.ConvertToOWL import ConvertToOWL
 from ConceptLearner.Utils import _find_classes_with_y_labels
 from torch_geometric.data import HeteroData
 from ontolearn.owlapy.model import OWLClassExpression
@@ -65,7 +65,7 @@ class DiscriminativeExplainer():
             return OWLObjectMinCardinality(ce.get_cardinality(), ce.get_property(), ce2)
         return ce
 
-    def __init__(self, gnn: GNN, data: HeteroData, namespace = "http://example.org/", owl_graph_path = "./owlGraphs/example.owl", generate_new_owl_file: bool = False, create_nominals: bool = False,  add_edge_counts: bool = False) -> None:
+    def __init__(self, gnn, data: HeteroData, namespace = "http://example.org/", owl_graph_path = "./owlGraphs/example.owl", generate_new_owl_file: bool = False, create_nominals: bool = False,  add_edge_counts: bool = False) -> None:
         """Initializes the explainer based on the given GNN and the Dataset. After the initialization the object should
         be able to produce explanations of single labels.
 
@@ -130,10 +130,15 @@ class DiscriminativeExplainer():
                         else:
                             negative_examples.append(node)
                 else:
-                    noOfNodes = self.data[node_type].x.size()[0]
-                    for idx in range(noOfNodes):
-                        node = self.namespace + node_type + "#" + str(idx+1)
-                        negative_examples.append(node)
+                    if "x" in self.data[node]:
+                        noOfNodes = self.data[node_type].x.size()[0]
+                        for idx in range(noOfNodes):
+                            node = self.namespace + node_type + "#" + str(idx+1)
+                            negative_examples.append(node)
+                    elif "num_nodes" in self.data[node]:
+                        for idx in range(self.data[node].num_nodes):
+                            node = self.namespace + node_type + "#" + str(idx+1)
+                            negative_examples.append(node)
             else:
                 if node_type in predictions:
                     nodeTypePredictions = predictions[node_type]
