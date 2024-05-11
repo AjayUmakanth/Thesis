@@ -1,5 +1,5 @@
 """Methods and classes that inherit the parent explainer class"""
-from ConceptLearner import GNN
+from ConceptLearner.GNN import GNN
 from ConceptLearner.ConvertToOWL import ConvertToOWL
 from ConceptLearner.Utils import _find_classes_with_y_labels
 from torch_geometric.data import HeteroData
@@ -130,13 +130,13 @@ class DiscriminativeExplainer():
                         else:
                             negative_examples.append(node)
                 else:
-                    if "x" in self.data[node]:
+                    if "x" in self.data[node_type]:
                         noOfNodes = self.data[node_type].x.size()[0]
                         for idx in range(noOfNodes):
                             node = self.namespace + node_type + "#" + str(idx+1)
                             negative_examples.append(node)
-                    elif "num_nodes" in self.data[node]:
-                        for idx in range(self.data[node].num_nodes):
+                    elif "num_nodes" in self.data[node_type]:
+                        for idx in range(self.data[node_type].num_nodes):
                             node = self.namespace + node_type + "#" + str(idx+1)
                             negative_examples.append(node)
             else:
@@ -178,10 +178,21 @@ class DiscriminativeExplainer():
                 break
         return hypotheses, self.model
 
-        [print(_) for _ in hypotheses]
-        if self.create_nominals:
-            hypotheses = [self.__replace_with_nominal(hypothesis.concept) for hypothesis in hypotheses]
-        else:
-            hypotheses = [hypothesis.concept for hypothesis in hypotheses]
+        #[print(_) for _ in hypotheses]
+        #if self.create_nominals:
+        #    hypotheses = [self.__replace_with_nominal(hypothesis.concept) for hypothesis in hypotheses]
+        #else:
+        #    hypotheses = [hypothesis.concept for hypothesis in hypotheses]
 
-        return hypotheses
+        #return hypotheses
+
+
+
+
+if __name__ == "__main__":
+    from torch_geometric.datasets import DBLP
+    import sys
+    sys.path.insert(0, '../.')
+    dataset = DBLP(root="./datasets/dblp")
+    explainer = DiscriminativeExplainer(None, dataset.data, "http://example.org/", owl_graph_path = "./owlGraphs/example1.owl")
+    hypotheses, model = explainer.explain(2, 5, debug=True, max_runtime=30, num_generations=400, quality_func=F1())

@@ -160,3 +160,10 @@ class ConvertToOWL():
                 newNode = classNamespace[f'{nodeType}#{node}']
                 self.graph.add((newNode, classNamespace[f'{nodeType}_incoming'], Literal(nodeCounts[nodeType][node]["incoming"])))
                 self.graph.add((newNode, classNamespace[f'{nodeType}_outgoing'], Literal(nodeCounts[nodeType][node]["outgoing"])))
+
+
+if __name__ == "__main__":
+    from torch_geometric.datasets import DBLP
+    dataset = DBLP(root="./datasets/dblp")
+    owlGraph = ConvertToOWL(data=dataset.data, namespace="http://example.org/", owlGraphPath = "./owlGraphs/example1.owl")
+    owlGraph.buildGraph()

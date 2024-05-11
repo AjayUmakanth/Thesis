@@ -385,5 +385,8 @@ class Evaluator:
             return set()
         result = set()
         for i in node_types:
-            result = result | set(enumerate([i] * self.data[i]["x"].shape[0]))
+            if "x" in self.data[i]:
+                result = result | set(enumerate([i] * self.data[i]["x"].shape[0]))
+            elif "num_nodes" in self.data[i]:
+                result = result | set(enumerate([i] * self.data[i]["num_nodes"]))
         return result
