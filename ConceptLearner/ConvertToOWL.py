@@ -29,7 +29,7 @@ class ConvertToOWL():
         self._createClasses()
         self._buildObjectProperties()
         if (self.create_data_properties):
-            self._buildDataProperties()
+            self._buildDataPropertiesAsObject()
         self._buildNodes()
         self._buildEdges()
         if (self.add_edge_counts):
@@ -67,13 +67,14 @@ class ConvertToOWL():
         for node in self.dataset.node_types:
             if "x" in self.dataset[node]:
                 tensorValues = self.dataset[node].x
-                n = tensorValues.size(1)
-                for i in range(n):
-                    # Create object property to connect property class to nodes
-                    propertyObjectProperty = classNamespace[f'has_{node}_property_{i+1}']
-                    self.graph.add((propertyObjectProperty, RDF.type, RDF.Property))
-                    self.graph.add((propertyObjectProperty, RDFS.domain, classNamespace[node]))
-                    self.graph.add((propertyObjectProperty, RDFS.range, Literal(True)))
+                tensorSize = tensorValues.size()
+                for i in range(tensorSize[1]):
+                    className = classNamespace[f'{node}_property_{i+1}']
+                    self.graph.add((className, RDF.type, OWL.Class))
+                    objectName = classNamespace[f'has_{node}_property_{i+1}']
+                    self.graph.add((objectName, RDF.type, RDF.Property))
+                    self.graph.add((objectName, RDFS.domain, classNamespace[node]))
+                    self.graph.add((objectName, RDFS.range, className))
     
     #Builds OWL object properties (relationships) based on each edge types in the dataset.
     def _buildObjectProperties(self):
@@ -104,7 +105,7 @@ class ConvertToOWL():
                             val = property.item()
                             if val != 0:
                                 propertyObjectProperty = classNamespace[f'{node}_property_{col_idx+1}']
-                                self.graph.add((newNode, propertyObjectProperty, Literal(val)))
+                                self.graph.add((newNode, classNamespace[f'has_{node}_property_{col_idx+1}'], classNamespace[f'{node}_property_{col_idx+1}']))
                                 #self.graph.add((newNode, propertyObjectProperty, Literal(True)))
             if "num_nodes" in self.dataset[node]: 
                 num_nodes = self.dataset[node].num_nodes

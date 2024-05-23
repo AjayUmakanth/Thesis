@@ -5,7 +5,7 @@ from torch_geometric.data import HeteroData
 import nltk
 from nltk.corpus import stopwords
 
-def load_dblp(path = "rawData\dblp", bag_of_words_size = 10):
+def load_dblp(path = "rawData\\dblp", bag_of_words_size = 10):
     author_ids, author_labels, author_id_dict = _get_authors(path)
     paper_tensor, paper_id_dict = _get_papers(path, bag_of_words_size)
     paper_author_mappings = _get_author_paper_mappings(path, author_id_dict, paper_id_dict)
@@ -39,11 +39,12 @@ def _get_authors(path):
     return ids, labels, id_dict
 
 def _get_papers(path, bag_of_words_size):
-    file_path = path + "\paper.txt" 
+    file_path = path + "\\paper.txt" 
     bag_of_words = []
     vocabulary = []
     total_words = {}
     paper_id_dict = {}
+    id_paper_dict = {}
     stop_words = stopwords.words('english')
 
     with open(file_path, "r") as file:
@@ -62,35 +63,46 @@ def _get_papers(path, bag_of_words_size):
                 else:
                     total_words[word] = 1
                 word_count[word] += 1
-            bag_of_words.append(dict(word_count))
+            bag_of_words.append(dict(word_count))            
             paper_id_dict[id] = idx
+            id_paper_dict[idx] = id
 
     total_words = dict(sorted(total_words.items(), key=lambda item: item[1], reverse=True)[:bag_of_words_size])
     vocabulary = list(total_words.keys())
 
     matrix = []
-    for item in bag_of_words:
+    valid_paper_ids = []
+    for idx, item in enumerate(bag_of_words):
         vector = [item.get(word, 0) for word in vocabulary]
         matrix.append(vector)
-
+        #if any(vector):  # Check if vector is not all zeros
+        #    matrix.append(vector)
+        #    valid_paper_ids.append(idx)
+    
     # Convert the matrix to a PyTorch tensor
     tensor = torch.tensor(matrix, dtype=torch.float32)
-
+    
+    # Filter out paper_id_dict to keep only valid papers
+    #paper_id_dict = {}
+    #for paper_id in valid_paper_ids:
+    #    paper_id_dict = {id_paper_dict[paper_id]: paper_id }
+    
     return tensor, paper_id_dict
 
 def _get_author_paper_mappings(path, author_id_dict, paper_id_dict):
-    file_path = path + "\paper_author.txt"  # Replace with the path to your file
+    file_path = path + "\\paper_author.txt"  # Replace with the path to your file
 
     mappings = []
 
     with open(file_path, "r") as file:
         for idx, line in enumerate(file):
             line = line.strip()
-            paper,author = line.split("\t", 1)
+            paper, author = line.split("\t", 1)
             if paper in paper_id_dict and author in author_id_dict:
                 mappings.append([paper_id_dict[paper],author_id_dict[author]])
 
-    return torch.tensor(mappings)
+    mappings = torch.tensor(mappings).t()
+    return mappings
 
 
 if __name__ == "__main__":
