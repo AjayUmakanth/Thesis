@@ -65,7 +65,7 @@ class DiscriminativeExplainer():
             return OWLObjectMinCardinality(ce.get_cardinality(), ce.get_property(), ce2)
         return ce
 
-    def __init__(self, gnn, data: HeteroData, namespace = "http://example.org/", owl_graph_path = "./owlGraphs/example.owl", generate_new_owl_file: bool = False, create_nominals: bool = False,  add_edge_counts: bool = False) -> None:
+    def __init__(self, gnn, data: HeteroData, namespace = "http://example.org/", owl_graph_path = "./owlGraphs/example.owl", generate_new_owl_file: bool = False, create_nominals: bool = False,  add_edge_counts: bool = False, create_data_properties_as_object: bool = False) -> None:
         """Initializes the explainer based on the given GNN and the Dataset. After the initialization the object should
         be able to produce explanations of single labels.
 
@@ -84,7 +84,7 @@ class DiscriminativeExplainer():
         if generate_new_owl_file and os.path.isfile(self.owl_graph_path):
             os.remove(self.owl_graph_path)
         if not os.path.isfile(self.owl_graph_path):
-            self.owlGraph = ConvertToOWL(data=self.data, namespace=self.namespace, owlGraphPath=self.owl_graph_path, create_nominals=create_nominals, add_edge_counts=add_edge_counts)
+            self.owlGraph = ConvertToOWL(data=self.data, namespace=self.namespace, owlGraphPath=self.owl_graph_path, create_nominals=create_nominals, add_edge_counts=add_edge_counts, create_data_properties_as_object = create_data_properties_as_object)
             self.owlGraph.buildGraph()
         self.knowledge_base = KnowledgeBase(path=self.owl_graph_path)
 
@@ -172,6 +172,7 @@ class DiscriminativeExplainer():
                 thresh = 0.05
                 accepted_hypotheses.append(hypothesis.quality*(1+thresh) > evaluated_concept.q or hypothesis.quality*(1-thresh) < evaluated_concept.q)
 
+            [print(_) for _ in hypotheses]
             hypotheses = [element for element, keep in zip(hypotheses, accepted_hypotheses) if keep]
 
             if len(hypotheses) > 0:

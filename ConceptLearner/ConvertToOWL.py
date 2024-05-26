@@ -3,7 +3,7 @@ from torch_geometric.data import HeteroData
 from rdflib.term import URIRef
 
 class ConvertToOWL():
-    def __init__(self, data: HeteroData, namespace: str, owlGraphPath: str, create_data_properties: bool = True, add_edge_counts: bool = False, create_nominals: bool = False) -> None:
+    def __init__(self, data: HeteroData, namespace: str, owlGraphPath: str, create_data_properties: bool = True, create_data_properties_as_object: bool = False, add_edge_counts: bool = False, create_nominals: bool = False) -> None:
         """Converts the heterodata into an OWL format
 
         Args:
@@ -22,6 +22,7 @@ class ConvertToOWL():
         self.create_nominals = create_nominals
         self.create_data_properties = create_data_properties
         self.add_edge_counts = add_edge_counts
+        self.create_data_properties_as_object = create_data_properties_as_object
         self.graph = Graph()
 
     #Builds the OWL graph using the provided heterogenous data.
@@ -29,7 +30,7 @@ class ConvertToOWL():
         self._createClasses()
         self._buildObjectProperties()
         if (self.create_data_properties):
-            self._buildDataPropertiesAsObject()
+                self._buildDataProperties()
         self._buildNodes()
         self._buildEdges()
         if (self.add_edge_counts):
@@ -58,23 +59,14 @@ class ConvertToOWL():
             if "x" in self.dataset[node]:
                 n = self.dataset[node].x.size(dim=1)
                 for i in range(n):
-                    self.graph.add((classNamespace[f'{node}_property_{i+1}'], RDF.type, OWL.DatatypeProperty))
-                    self.graph.add((classNamespace[f'{node}_property_{i+1}'], RDFS.domain, classNamespace[node]))
-                    self.graph.add((classNamespace[f'{node}_property_{i+1}'], RDFS.range, XSD.double))
-
-    def _buildDataPropertiesAsObject(self):
-        classNamespace = Namespace(self.namespace)
-        for node in self.dataset.node_types:
-            if "x" in self.dataset[node]:
-                tensorValues = self.dataset[node].x
-                tensorSize = tensorValues.size()
-                for i in range(tensorSize[1]):
-                    className = classNamespace[f'{node}_property_{i+1}']
-                    self.graph.add((className, RDF.type, OWL.Class))
-                    objectName = classNamespace[f'has_{node}_property_{i+1}']
-                    self.graph.add((objectName, RDF.type, RDF.Property))
-                    self.graph.add((objectName, RDFS.domain, classNamespace[node]))
-                    self.graph.add((objectName, RDFS.range, className))
+                    propertyObjectPropertyName = f'{node}_property_{i+1}'
+                    if self.create_data_properties_as_object:
+                        propertyObjectPropertyName = "has_" + propertyObjectPropertyName
+                    propertyObjectProperty = classNamespace[propertyObjectPropertyName]
+                    xsdRange = XSD.boolean if self.create_data_properties_as_object else XSD.double
+                    self.graph.add((propertyObjectProperty, RDF.type, OWL.DatatypeProperty))
+                    self.graph.add((propertyObjectProperty, RDFS.domain, classNamespace[node]))
+                    self.graph.add((propertyObjectProperty, RDFS.range, xsdRange))
     
     #Builds OWL object properties (relationships) based on each edge types in the dataset.
     def _buildObjectProperties(self):
@@ -104,14 +96,18 @@ class ConvertToOWL():
                         for col_idx, property in enumerate(person):
                             val = property.item()
                             if val != 0:
-                                propertyObjectProperty = classNamespace[f'{node}_property_{col_idx+1}']
-                                self.graph.add((newNode, classNamespace[f'has_{node}_property_{col_idx+1}'], classNamespace[f'{node}_property_{col_idx+1}']))
-                                #self.graph.add((newNode, propertyObjectProperty, Literal(True)))
+                                propertyObjectPropertyName = f'{node}_property_{col_idx+1}'
+                                if self.create_data_properties_as_object:
+                                    propertyObjectPropertyName = "has_" + propertyObjectPropertyName
+                                propertyObjectProperty = classNamespace[propertyObjectPropertyName]
+                                #self.graph.add((newNode, classNamespace[f'has_{node}_property_{col_idx+1}'], classNamespace[f'{node}_property_{col_idx+1}']))
+                                self.graph.add((newNode, propertyObjectProperty, Literal(True if self.create_data_properties_as_object else val)))
             if "num_nodes" in self.dataset[node]: 
                 num_nodes = self.dataset[node].num_nodes
                 for idx in range(num_nodes):
                     newNode = classNamespace[f'{node}#{idx+1}']
                     self.graph.add((newNode, rdf.type, classNamespace[node]))
+                    self.graph.add((newNode, rdf.type, OWL.NamedIndividual))
 
     #Builds edges between nodes in the OWL graph.
     def _buildEdges(self):

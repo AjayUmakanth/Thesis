@@ -11,7 +11,8 @@ def load_dblp(path = "rawData\\dblp", bag_of_words_size = 10):
     paper_author_mappings = _get_author_paper_mappings(path, author_id_dict, paper_id_dict)
 
     dataset = HeteroData()
-    dataset['author'].x = torch.tensor([0] * len(author_labels)).unsqueeze(1)
+    dataset['author'].num_nodes = len(author_labels)    
+    #dataset['author'].x = torch.tensor([5] * len(author_labels)).unsqueeze(1)
     dataset['author'].y = torch.tensor(list(author_labels))
     dataset['paper'].x = paper_tensor
     dataset['author', 'writes', 'paper'].edge_index = paper_author_mappings.t()
@@ -99,9 +100,9 @@ def _get_author_paper_mappings(path, author_id_dict, paper_id_dict):
             line = line.strip()
             paper, author = line.split("\t", 1)
             if paper in paper_id_dict and author in author_id_dict:
-                mappings.append([paper_id_dict[paper],author_id_dict[author]])
+                mappings.append([author_id_dict[author],paper_id_dict[paper]])
 
-    mappings = torch.tensor(mappings).t()
+    mappings = torch.tensor(mappings)
     return mappings
 
 
