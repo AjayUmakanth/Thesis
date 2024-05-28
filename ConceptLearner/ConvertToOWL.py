@@ -60,6 +60,8 @@ class ConvertToOWL():
                 n = self.dataset[node].x.size(dim=1)
                 for i in range(n):
                     propertyObjectPropertyName = f'{node}_property_{i+1}'
+                    if "xKeys" in self.dataset[node]:
+                        propertyObjectPropertyName =  self.dataset[node].xKeys[i]   
                     if self.create_data_properties_as_object:
                         propertyObjectPropertyName = "has_" + propertyObjectPropertyName
                     propertyObjectProperty = classNamespace[propertyObjectPropertyName]
@@ -95,13 +97,19 @@ class ConvertToOWL():
                     if self.create_data_properties:
                         for col_idx, property in enumerate(person):
                             val = property.item()
-                            if val != 0:
-                                propertyObjectPropertyName = f'{node}_property_{col_idx+1}'
-                                if self.create_data_properties_as_object:
-                                    propertyObjectPropertyName = "has_" + propertyObjectPropertyName
-                                propertyObjectProperty = classNamespace[propertyObjectPropertyName]
-                                #self.graph.add((newNode, classNamespace[f'has_{node}_property_{col_idx+1}'], classNamespace[f'{node}_property_{col_idx+1}']))
-                                self.graph.add((newNode, propertyObjectProperty, Literal(True if self.create_data_properties_as_object else val)))
+                            propertyObjectPropertyName = f'{node}_property_{col_idx+1}'
+                            if "xKeys" in self.dataset[node]:
+                                propertyObjectPropertyName =  self.dataset[node].xKeys[col_idx] 
+                            if self.create_data_properties_as_object:
+                                propertyObjectPropertyName = "has_" + propertyObjectPropertyName
+                            propertyObjectProperty = classNamespace[propertyObjectPropertyName]
+                            #self.graph.add((newNode, classNamespace[f'has_{node}_property_{col_idx+1}'], classNamespace[f'{node}_property_{col_idx+1}']))
+                            if self.create_data_properties_as_object:
+                                if val != 0:
+                                    val = True
+                                else:
+                                    val = False
+                            self.graph.add((newNode, propertyObjectProperty, Literal(val)))
             if "num_nodes" in self.dataset[node]: 
                 num_nodes = self.dataset[node].num_nodes
                 for idx in range(num_nodes):

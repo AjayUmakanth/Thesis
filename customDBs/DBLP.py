@@ -7,7 +7,7 @@ from nltk.corpus import stopwords
 
 def load_dblp(path = "rawData\\dblp", bag_of_words_size = 10):
     author_ids, author_labels, author_id_dict = _get_authors(path)
-    paper_tensor, paper_id_dict = _get_papers(path, bag_of_words_size)
+    paper_tensor, paper_id_dict, bag_of_words = _get_papers(path, bag_of_words_size)
     paper_author_mappings = _get_author_paper_mappings(path, author_id_dict, paper_id_dict)
 
     dataset = HeteroData()
@@ -15,6 +15,7 @@ def load_dblp(path = "rawData\\dblp", bag_of_words_size = 10):
     #dataset['author'].x = torch.tensor([5] * len(author_labels)).unsqueeze(1)
     dataset['author'].y = torch.tensor(list(author_labels))
     dataset['paper'].x = paper_tensor
+    dataset['paper'].xKeys = bag_of_words
     dataset['author', 'writes', 'paper'].edge_index = paper_author_mappings.t()
     return dataset
 
@@ -88,7 +89,7 @@ def _get_papers(path, bag_of_words_size):
     #for paper_id in valid_paper_ids:
     #    paper_id_dict = {id_paper_dict[paper_id]: paper_id }
     
-    return tensor, paper_id_dict
+    return tensor, paper_id_dict, vocabulary
 
 def _get_author_paper_mappings(path, author_id_dict, paper_id_dict):
     file_path = path + "\\paper_author.txt"  # Replace with the path to your file

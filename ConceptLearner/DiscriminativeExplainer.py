@@ -168,7 +168,7 @@ class DiscriminativeExplainer():
             hypotheses = list(self.model.best_hypotheses(n=n))
             accepted_hypotheses = []
             for hypothesis in hypotheses:
-                evaluated_concept = self.model.kb.evaluate_concept(hypothesis.concept, self.model.quality_func, self.model._learning_problem)
+                evaluated_concept = self.model.kb.evaluate_concept(hypothesis.concept, quality_func, self.model._learning_problem)
                 thresh = 0.05
                 accepted_hypotheses.append(hypothesis.quality*(1+thresh) > evaluated_concept.q or hypothesis.quality*(1-thresh) < evaluated_concept.q)
 
