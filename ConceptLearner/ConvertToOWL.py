@@ -99,16 +99,16 @@ class ConvertToOWL():
                             val = property.item()
                             propertyObjectPropertyName = f'{node}_property_{col_idx+1}'
                             if "xKeys" in self.dataset[node]:
-                                propertyObjectPropertyName =  self.dataset[node].xKeys[col_idx] 
+                                propertyObjectPropertyName =  self.dataset[node].xKeys[col_idx]
                             if self.create_data_properties_as_object:
                                 propertyObjectPropertyName = "has_" + propertyObjectPropertyName
                             propertyObjectProperty = classNamespace[propertyObjectPropertyName]
+                            if propertyObjectPropertyName == "17th_century" or propertyObjectPropertyName == "th_century":
+                                print(propertyObjectPropertyName)
+                                print(propertyObjectProperty)
                             #self.graph.add((newNode, classNamespace[f'has_{node}_property_{col_idx+1}'], classNamespace[f'{node}_property_{col_idx+1}']))
                             if self.create_data_properties_as_object:
-                                if val != 0:
-                                    val = True
-                                else:
-                                    val = False
+                                val = True if val != 0 else False
                             self.graph.add((newNode, propertyObjectProperty, Literal(val)))
             if "num_nodes" in self.dataset[node]: 
                 num_nodes = self.dataset[node].num_nodes

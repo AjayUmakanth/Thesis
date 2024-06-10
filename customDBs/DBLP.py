@@ -9,6 +9,8 @@ def load_dblp(path = "rawData\\dblp", bag_of_words_size = 10):
     author_ids, author_labels, author_id_dict = _get_authors(path)
     paper_tensor, paper_id_dict, bag_of_words = _get_papers(path, bag_of_words_size)
     paper_author_mappings = _get_author_paper_mappings(path, author_id_dict, paper_id_dict)
+    conf_ids, conf_id_dict = _get_conference(path)
+    paper_conference_mappings = _get_paper_conference_mappings(path, author_id_dict, conf_id_dict)
 
     dataset = HeteroData()
     dataset['author'].num_nodes = len(author_labels)    
@@ -17,6 +19,8 @@ def load_dblp(path = "rawData\\dblp", bag_of_words_size = 10):
     dataset['paper'].x = paper_tensor
     dataset['paper'].xKeys = bag_of_words
     dataset['author', 'writes', 'paper'].edge_index = paper_author_mappings.t()
+    dataset['conference'].num_nodes = len(conf_ids)
+    dataset['paper', 'published_in', 'conference'].edge_index = paper_conference_mappings.t()
     return dataset
 
 def _get_authors(path):
@@ -31,13 +35,13 @@ def _get_authors(path):
             ids.append(id)
             labels.append(int(label))
 
-    sorted_lists = sorted(zip(ids, labels))
+    #sorted_lists = sorted(zip(ids, labels))
 
     id_dict = {}
     for idx, id in enumerate(ids):
         id_dict[id] = idx
     # Unzip the sorted lists
-    ids, labels = zip(*sorted_lists)
+    #ids, labels = zip(*sorted_lists)
     return ids, labels, id_dict
 
 def _get_papers(path, bag_of_words_size):
@@ -106,7 +110,41 @@ def _get_author_paper_mappings(path, author_id_dict, paper_id_dict):
     mappings = torch.tensor(mappings)
     return mappings
 
+def _get_conference(path):
+    file_path = path + "\\conf.txt" # Replace with the path to your file
+    ids = []
+
+    with open(file_path, "r") as file:
+        for idx, line in enumerate(file):
+            line = line.strip()
+            id, name = line.split("\t")
+            ids.append(id)
+
+    #sorted_lists = sorted(zip(ids, labels))
+
+    id_dict = {}
+    for idx, id in enumerate(ids):
+        id_dict[id] = idx
+    # Unzip the sorted lists
+    #ids, labels = zip(*sorted_lists)
+    return ids, id_dict
+
+def _get_paper_conference_mappings(path, paper_id_dict, conf_id_dict):
+    file_path = path + "\\paper_conf.txt"  # Replace with the path to your file
+
+    mappings = []
+
+    with open(file_path, "r") as file:
+        for idx, line in enumerate(file):
+            line = line.strip()
+            paper, conference = line.split("\t", 1)
+            if paper in paper_id_dict and conference in conf_id_dict:
+                mappings.append([paper_id_dict[paper], conf_id_dict[conference]])
+
+    mappings = torch.tensor(mappings)
+    return mappings
+
 
 if __name__ == "__main__":
-    dataset = load_dblp()
+    dataset = load_dblp(path = "rawData\\customDblp")
     print(dataset)
