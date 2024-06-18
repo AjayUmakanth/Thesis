@@ -28,35 +28,50 @@ def _get_movies(data_list, bag_of_words_size):
     labels = []
     bag_of_words = []
     labelNames = ["Action", "Comedy", "Drama"]
+    ratings = []
+    rating_order = {"G":[1,0,0,0,0],
+                    "PG":[0,1,0,0,0],
+                    "PG-13":[0,0,1,0,0],
+                    "R":[0,0,0,1,0],
+                    "NC-17":[0,0,0,0,1]}
+
 
     for data in data_list:
         genres = data["genres"].split("|")
+        label = -1
         for label_idx, labelName in enumerate(labelNames):
             if labelName in genres:
-                labels.append(label_idx)
-                movies[data["movie_title"]] = len(labels)
-                plots = data["plot_keywords"].split("|")  # Tokenize and convert to lowercase
-                word_count = defaultdict(int)
-                for plot in plots:
-                    plot = plot.replace(" ", "_")
-                    if plot == "":
-                        continue
-                    if plot in total_words:
-                        total_words[plot] += 1
-                    else:
-                        total_words[plot] = 1
-                    word_count[plot] += 1
-                bag_of_words.append(dict(word_count))
+                label = label_idx
+        if data["content_rating"] in rating_order.keys():
+            ratings.append(rating_order[data["content_rating"]])
+        else:
+            continue
+        if label == -1:
+            continue
+        labels.append(label)
+        movies[data["movie_title"]] = len(labels)
+        plots = data["plot_keywords"].split("|")  # Tokenize and convert to lowercase
+        word_count = defaultdict(int)
+        for plot in plots:
+            plot = plot.replace(" ", "_")
+            if plot == "":
                 continue
-
+            if plot in total_words:
+                total_words[plot] += 1
+            else:
+                total_words[plot] = 1
+            word_count[plot] += 1
+        bag_of_words.append(dict(word_count))
     total_words = dict(sorted(total_words.items(), key=lambda item: item[1], reverse=True)[:bag_of_words_size])
     vocabulary = list(total_words.keys())
 
     matrix = []
-    for item in bag_of_words:
+    for idx, item in enumerate(bag_of_words):
         vector = [item.get(word, 0) for word in vocabulary]
-        matrix.append(vector)
-    
+        matrix.append(vector + ratings[idx])
+    vocabulary = ["plot_keyword_" + word for word in vocabulary]
+    print(vocabulary)
+    vocabulary += ["rating_G","rating_PG","rating_PG13","rating_R","rating_NC17"]
     # Convert the matrix to a PyTorch tensor
     tensor = torch.tensor(matrix, dtype=torch.float32)
     return labels, tensor, vocabulary
@@ -88,5 +103,5 @@ def _parse_csv_to_dict(file_path):
 
 # Example usage
 if __name__ == "__main__":
-    result = load_idmb()
+    result = load_imdb()
     print(result)
