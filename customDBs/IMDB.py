@@ -70,7 +70,6 @@ def _get_movies(data_list, bag_of_words_size):
         vector = [item.get(word, 0) for word in vocabulary]
         matrix.append(vector + ratings[idx])
     vocabulary = ["plot_keyword_" + word for word in vocabulary]
-    print(vocabulary)
     vocabulary += ["rating_G","rating_PG","rating_PG13","rating_R","rating_NC17"]
     # Convert the matrix to a PyTorch tensor
     tensor = torch.tensor(matrix, dtype=torch.float32)
